@@ -1,92 +1,136 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+      integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet" href="css/style.css" />
-    <script defer src="js/javascript.js"></script>
+    <script type="module">
+      const owner = "Я";
+      import { createTodoApp } from "./todo-app/view.js";
+      async function local() {
+        let local = await import("./todo-app/localStorage.js");
+        const todoItemList = await local.getTodoList(owner);
+        const createTodoItem = local.createTodoItem;
+        const switchTodoItemDon = local.switchTodoItemDone;
+        const deleteTodoItem = local.deleteTodoItem;
+        return {
+          title: "Мои дела",
+          owner,
+          todoItemList,
+          onCreateFormSubmit: createTodoItem,
+          onDoneClick: switchTodoItemDon,
+          onDeleteClick: deleteTodoItem,
+        };
+      }
+      // local();
+      (async () => {
+        // const todoItemList = await getTodoList(owner);
+        local().then((value) => {
+          createTodoApp(document.getElementById("todo-app"), value);
+        });
+      })();
+      async function api() {
+        let api = await import("./todo-app/api.js");
+        const todoItemList = await api.getTodoList(owner);
+        const createTodoItem = api.createTodoItem;
+        const switchTodoItemDon = api.switchTodoItemDone;
+        const deleteTodoItem = api.deleteTodoItem;
+        return {
+          title: "Мои дела",
+          owner,
+          todoItemList,
+          onCreateFormSubmit: createTodoItem,
+          onDoneClick: switchTodoItemDon,
+          onDeleteClick: deleteTodoItem,
+        };
 
-    <title>Таблица студентов</title>
+        // const say2 = say.hi; // Модуль загружен (экспорт по умолчанию)!
+        // const bye2 = say.bye;
+        // return [say2, bye2];
+      }
+
+      let flag = false;
+      const btnToggleStorage = document.querySelector(".btn-storage");
+      btnToggleStorage.addEventListener("click", () => {
+        if (flag === true) {
+          // локальное хранилище
+          // local();
+          const object = local().then((value) => {
+            createTodoApp(document.getElementById("todo-app"), value);
+          });
+        } else {
+          // серверное хранилище возвращает промис
+          const object = api().then((value) => {
+            createTodoApp(document.getElementById("todo-app"), value);
+          });
+
+          //
+        }
+        flag = !flag;
+      });
+
+      // async function api() {
+      //   let api = await import("./todo-app/view.js");
+      //   api.default(), // есть
+      //     createTodoItem, // есть
+      //     switchTodoItemDone,
+      //     deleteTodoItem;
+      // }
+      // async function local() {
+      //   let localStorage = await import("./todo-app/localStorage.js");
+      //   // const todoItemList = localStorage.getTodoList();
+      //   // получение данных с локалки
+      //   getTodoList, createTodoItem;
+      // }
+      // let flag = false;
+      // const btnToggleStorage = document.querySelector(".btn-storage");
+      // btnToggleStorage.addEventListener("click", () => {
+      //   if (flag === false) {
+      //     local();
+      //   } else {
+      //     api();
+      //   }
+      //   flag = !flag;
+      // });
+
+      // // import {
+      // //   getTodoList, // есть
+      // //   createTodoItem,
+      // //   switchTodoItemDone,
+      // //   deleteTodoItem,
+      // // } from "./todo-app/api.js";
+      // const owner = "Я";
+      // (async () => {
+      //   // const todoItemList = await getTodoList(owner);
+      //   createTodoApp(document.getElementById("todo-app"), {
+      //     title: "Мои дела",
+      //     owner,
+      //     todoItemList,
+      //     onCreateFormSubmit: createTodoItem,
+      //     onDoneClick: switchTodoItemDone,
+      //     onDeleteClick: deleteTodoItem,
+      //   });
+      // })();
+    </script>
+    <title>TODO мои дела</title>
   </head>
   <body>
-    <div class="container">
-      <div class="row mb-7">
-        <h1 class="title-students">Список студентов</h1>
-        <form
-          action=""
-          id="form"
-          class="d-flex flex-wrap align-items-end justify-content-center"
-        >
-          <div class="col-2 mb-2 me-2">
-            <label for="lastName" class="add__title form-label">Фамилия</label>
-            <input type="text" id="lastName" class="add__input form-control" />
-          </div>
-          <div class="col-2 mb-2 me-2">
-            <label for="name" class="add__title form-label">Имя</label>
-            <input type="text" id="name" class="add__input form-control" />
-          </div>
-          <div class="col-2 mb-2 me-2">
-            <label for="surname" class="add__title form-label">Отчество</label>
-            <input type="text" id="surname" class="add__input form-control" />
-          </div>
-          <div class="col-2 mb-2 me-2">
-            <label for="date" class="add__title form-label"
-              >Дата рождения</label
-            >
-            <input
-              type="date"
-              id="date"
-              class="add__input form-control"
-              min="1900-01-01"
-            />
-          </div>
-          <div class="col-2 mb-2 me-2">
-            <label for="dateEducation" class="add__title form-label"
-              >Год поступления</label
-            >
-            <input
-              type="date"
-              id="dateEducation"
-              class="add__input form-control"
-              min="2000-01-01"
-            />
-          </div>
-          <div class="col-4 mb-2 me-2">
-            <label for="faculty" class="add__title form-label">Факультет</label>
-            <input type="text" id="faculty" class="add__input form-control" />
-          </div>
-          <button id="add__btn" class="add__btn btn btn-primary me-2">
-            Добавить студента
-          </button>
-          <button id="search__btn" class="search__btn btn btn-primary">
-            Найти студента
-          </button>
-        </form>
-      </div>
-      <div class="row">
-        <table class="table table-striped">
-          <thead class="table-primary">
-            <tr>
-              <th scope="col" class="fullname-filter">ФИО</th>
-              <th scope="col" class="faculty-filter">Факультет</th>
-              <th scope="col" class="date-filter">Дата рождения и возраст</th>
-              <th scope="col" class="dateEducation-filter">
-                Годы обучения и номер курса
-              </th>
-              <th scope="col">Удалить</th>
-            </tr>
-          </thead>
-          <tbody class="table__wrap"></tbody>
-        </table>
-      </div>
+    <div class="container md-5">
+      <nav class="nav">
+        <a href="index.html" class="nav-link">Мои дела</a>
+        <a href="dad.html" class="nav-link">Дела папы</a>
+        <a href="mom.html" class="nav-link">Дела мамы</a>
+        <button class="btn btn-primary btn-storage">
+          Переключить хранилище
+        </button>
+      </nav>
     </div>
+    <div id="todo-app" class="container"></div>
   </body>
 </html>
