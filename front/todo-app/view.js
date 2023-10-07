@@ -1,3 +1,33 @@
+ async function local(title, owner) {
+  let local = await import("./localStorage.js");
+  const todoItemList = await local.getTodoList(owner);
+  const createTodoItem = local.createTodoItem;
+  const switchTodoItemDone = local.switchTodoItemDone;
+  const deleteTodoItem = local.deleteTodoItem;
+  createTodoApp(document.getElementById("todo-app"), {
+    title,
+    owner,
+    todoItemList,
+    onCreateFormSubmit: createTodoItem,
+    onDoneClick: switchTodoItemDone,
+    onDeleteClick: deleteTodoItem,
+  });
+}
+async function api(title, owner) {
+  let api = await import("./api.js");
+  const todoItemList = await api.getTodoList(owner);
+  const createTodoItem = api.createTodoItem;
+  const switchTodoItemDone = api.switchTodoItemDone;
+  const deleteTodoItem = api.deleteTodoItem;
+  createTodoApp(document.getElementById("todo-app"), {
+    title,
+    owner,
+    todoItemList,
+    onCreateFormSubmit: createTodoItem,
+    onDoneClick: switchTodoItemDone,
+    onDeleteClick: deleteTodoItem,
+  });
+}
 // let listArray = []
 // let listName = '';
 // созадаёт и возращает заголовок приложения
@@ -115,33 +145,30 @@ function getNewId(arr){
 // function saveList(arr, keyName) {
 //   localStorage.setItem(keyName, JSON.stringify(arr));
 // }
+let flag = false;
+export function btnStorage(title, owner){
+  const btnToggleStorage = document.querySelector(".btn-storage");
+  local(title, owner);
 
-async function createTodoApp(container, {title, owner, todoItemList, onCreateFormSubmit, onDoneClick, onDeleteClick, api, local}) {
+  btnToggleStorage.addEventListener("click", () => {
+    if (flag === true) {
+      // локальное хранилище
+      local(title, owner);
+    } else {
+      // серверное хранилище возвращает промис
+      api(title, owner);
+    }
+    flag = !flag;
+  });
+}
+
+async function createTodoApp(container, {title, owner, todoItemList, onCreateFormSubmit, onDoneClick, onDeleteClick}) {
   //  console.log(todoItemList)
+    container.innerHTML = '';
     let todoAppTitle = createAppTitle(title);
     let todoItemForm = createTodoItemForm();
     let todoList = createTodoList();
     const handlers = {onDone: onDoneClick, onDelete: onDeleteClick,}
-
-    const btnToggleStorage = document.querySelector(".btn-storage");
-
-    btnToggleStorage.addEventListener("click", () => {
-      if (flag === true) {
-        // локальное хранилище
-        // local();
-        const object = local().then((value) => {
-          createTodoApp(document.getElementById("todo-app"), value);
-        });
-      } else {
-        // серверное хранилище возвращает промис
-        const object = api().then((value) => {
-          createTodoApp(document.getElementById("todo-app"), value);
-        });
-
-        //
-      }
-      flag = !flag;
-    });
 
 
     // container.append(buttonStorage);
@@ -182,13 +209,8 @@ async function createTodoApp(container, {title, owner, todoItemList, onCreateFor
       //создание дела
       const todoItem = await onCreateFormSubmit({owner, name: todoItemForm.input.value.trim(),});
       console.log(todoItemForm.input.value);
-      // let newItemArray = {
-      //   id: getNewId(listArray),
-      //   name: todoItemForm.input.value,
-      //   done: false,
-      // };
-      // listArray.push(newItemArray);
-     // создание элемента
+
+     // создание элемента и вывод на страницу
       let todoItemElement = createTodoItemElement(todoItem, handlers);
 
 
