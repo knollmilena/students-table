@@ -12,17 +12,57 @@
     />
     <script type="module">
       import { createTodoApp } from "./todo-app/view.js";
-      import {
-        getTodoList,
-        createTodoItem,
-        switchTodoItemDone,
-        deleteTodoItem,
-      } from "./todo-app/api.js";
-      createTodoApp(
-        document.getElementById("todo-app"),
-        "Дела для мамы",
-        "Мама"
-      );
+      const owner = "Мама";
+      const title = "Дела мамы";
+      const btnToggleStorage = document.querySelector(".btn-storage");
+      let flag = false;
+
+      async function local() {
+        let local = await import("./todo-app/localStorage.js");
+        const todoItemList = await local.getTodoList(owner);
+        const createTodoItem = local.createTodoItem;
+        const switchTodoItemDone = local.switchTodoItemDone;
+        const deleteTodoItem = local.deleteTodoItem;
+        createTodoApp(document.getElementById("todo-app"), {
+          title,
+          owner,
+          todoItemList,
+          onCreateFormSubmit: createTodoItem,
+          onDoneClick: switchTodoItemDone,
+          onDeleteClick: deleteTodoItem,
+          local: true,
+        });
+      }
+      async function api() {
+        let api = await import("./todo-app/api.js");
+        const todoItemList = await api.getTodoList(owner);
+        const createTodoItem = api.createTodoItem;
+        const switchTodoItemDone = api.switchTodoItemDone;
+        const deleteTodoItem = api.deleteTodoItem;
+        createTodoApp(document.getElementById("todo-app"), {
+          title,
+          owner,
+          todoItemList,
+          onCreateFormSubmit: createTodoItem,
+          onDoneClick: switchTodoItemDone,
+          onDeleteClick: deleteTodoItem,
+          local: false,
+        });
+      }
+
+      local();
+      btnToggleStorage.addEventListener("click", () => {
+        if (flag === true) {
+          // локальное хранилище
+          btnToggleStorage.innerHTML = "Перейти на серверное хранилище";
+          local();
+        } else {
+          // серверное хранилище возвращает промис
+          api();
+          btnToggleStorage.innerHTML = "Перейти на локальное хранилище";
+        }
+        flag = !flag;
+      });
     </script>
     <title>TODO дела мамы</title>
   </head>
@@ -32,6 +72,9 @@
         <a href="index.html" class="nav-link">Мои дела</a>
         <a href="dad.html" class="nav-link">Дела папы</a>
         <a href="mom.html" class="nav-link">Дела мамы</a>
+        <button class="btn btn-primary btn-storage">
+          Переключить хранилище
+        </button>
       </nav>
     </div>
     <div id="todo-app" class="container"></div>

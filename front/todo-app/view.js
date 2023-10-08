@@ -1,35 +1,5 @@
- async function local(title, owner) {
-  let local = await import("./localStorage.js");
-  const todoItemList = await local.getTodoList(owner);
-  const createTodoItem = local.createTodoItem;
-  const switchTodoItemDone = local.switchTodoItemDone;
-  const deleteTodoItem = local.deleteTodoItem;
-  createTodoApp(document.getElementById("todo-app"), {
-    title,
-    owner,
-    todoItemList,
-    onCreateFormSubmit: createTodoItem,
-    onDoneClick: switchTodoItemDone,
-    onDeleteClick: deleteTodoItem,
-  });
-}
-async function api(title, owner) {
-  let api = await import("./api.js");
-  const todoItemList = await api.getTodoList(owner);
-  const createTodoItem = api.createTodoItem;
-  const switchTodoItemDone = api.switchTodoItemDone;
-  const deleteTodoItem = api.deleteTodoItem;
-  createTodoApp(document.getElementById("todo-app"), {
-    title,
-    owner,
-    todoItemList,
-    onCreateFormSubmit: createTodoItem,
-    onDoneClick: switchTodoItemDone,
-    onDeleteClick: deleteTodoItem,
-  });
-}
-// let listArray = []
-// let listName = '';
+import { saveList } from "./localStorage.js";
+
 // созадаёт и возращает заголовок приложения
 function createAppTitle(title) {
     let appTitle = document.createElement('h2');
@@ -85,14 +55,13 @@ list.classList.add('list-group');
 return list;
 }
 
-function createTodoItemElement(todoItem, {onDone, onDelete}) {
-    // console.log(todoItem)
+function createTodoItemElement(todoItem, {onDone, onDelete}, owner, todoItemList, local) {
+
     const doneClass ='list-group-item-success';
     let item = document.createElement('li');
     let buttonGroup = document.createElement('div');
     let doneButton = document.createElement('button');
     let deleteButton = document.createElement('button');
-    console.log(todoItem.name)
     item.textContent = todoItem.name;
 
 
@@ -106,16 +75,18 @@ function createTodoItemElement(todoItem, {onDone, onDelete}) {
     doneButton.addEventListener('click', function() {
       onDone({todoItem, element: item});
       item.classList.toggle(doneClass, todoItem.done);
-      // for( const listItem of listArray) {
-      //   if (listItem.id == object.id){
-      //      listItem.done = !listItem.done;
-      //   }
-      // }
-      // saveList(listArray, listName);
+      if(local){
+        saveList(owner, todoItemList);
+      }
+
     });
 
-    deleteButton.addEventListener('click', function() {
-      onDelete({ todoItem, element: item});
+    deleteButton.addEventListener('click',  function() {
+      onDelete( todoItem, item, todoItemList, owner);
+      if(local){
+
+      }
+
     });
 
 
@@ -142,61 +113,25 @@ function getNewId(arr){
   return max + 1;
 }
 
-// function saveList(arr, keyName) {
-//   localStorage.setItem(keyName, JSON.stringify(arr));
-// }
-let flag = false;
-export function btnStorage(title, owner){
-  const btnToggleStorage = document.querySelector(".btn-storage");
-  local(title, owner);
+async function createTodoApp(container, {title, owner, todoItemList, onCreateFormSubmit, onDoneClick, onDeleteClick, local}) {
 
-  btnToggleStorage.addEventListener("click", () => {
-    if (flag === true) {
-      // локальное хранилище
-      local(title, owner);
-    } else {
-      // серверное хранилище возвращает промис
-      api(title, owner);
-    }
-    flag = !flag;
-  });
-}
-
-async function createTodoApp(container, {title, owner, todoItemList, onCreateFormSubmit, onDoneClick, onDeleteClick}) {
-  //  console.log(todoItemList)
     container.innerHTML = '';
     let todoAppTitle = createAppTitle(title);
     let todoItemForm = createTodoItemForm();
     let todoList = createTodoList();
     const handlers = {onDone: onDoneClick, onDelete: onDeleteClick,}
 
-
-    // container.append(buttonStorage);
     container.append(todoAppTitle);
     container.append(todoItemForm.form);
     container.append(todoList);
 
-    // buttonStorage.addEventListener('click', () => {
-    //   console.log('gedf');
-    // })
-
-
-     // listName = owner;
-
-    // let localData = localStorage.getItem(listName);
-    // if (localData != null && localData !== '') {
-    //   listArray = JSON.parse(localData);
-    // }
-
-    // for (const listItem of listArray) {
-    //   let todoItem = createTodoItemElement(listItem);
-    //   todoList.append(todoItem.item);
-    // }
-
-    todoItemList.forEach((todoItem) => {
-        const todoItemElement = createTodoItemElement(todoItem, handlers);
+    if(todoItemList){
+      todoItemList.forEach((todoItem) => {
+        const todoItemElement = createTodoItemElement(todoItem, handlers, owner, todoItemList, local);
         todoList.append(todoItemElement);
     })
+    }
+
 
 
     todoItemForm.form.addEventListener('submit', async function (e) {
@@ -205,15 +140,15 @@ async function createTodoApp(container, {title, owner, todoItemList, onCreateFor
         return;
       }
       todoItemForm.button.disabled = true;
-
       //создание дела
-      const todoItem = await onCreateFormSubmit({owner, name: todoItemForm.input.value.trim(),});
-      console.log(todoItemForm.input.value);
+      const todoItem = await onCreateFormSubmit({owner, name: todoItemForm.input.value.trim(),}, todoItemList);
+  if (local && todoItemList){
+    todoItemList.push(todoItem);
+    saveList(owner, todoItemList);
+  }
 
      // создание элемента и вывод на страницу
-      let todoItemElement = createTodoItemElement(todoItem, handlers);
-
-
+      let todoItemElement = createTodoItemElement(todoItem, handlers, owner, todoItemList, local);
 
       // добавляем на страницу дело с названием из поля
       todoList.append(todoItemElement);

@@ -29,7 +29,7 @@ export function switchTodoItemDone({todoItem}) {
 
 }
 
-export function deleteTodoItem({todoItem, element}) {
+export function deleteTodoItem(todoItem, element) {
   if(!confirm('Вы уверены?')) {
           return;
         }
